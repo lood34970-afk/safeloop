@@ -1,0 +1,24 @@
+.gradle/
+.idea/
+.kotlin/
+local.properties
+**/build/
+*.iml
+*.jks
+*.keystore
+keystore.properties
+captures/
+.externalNativeBuild/
+.cxx/
+vendor/
+.tmp/
+
+# 제출용 release APK만 커밋
+apk/*.apk
+!apk/*_release.apk
+
+# 공개 저장소에서 제외: 개인정보·제출 서류·미제출 아이디어
+docs/INTERVIEW_RESPONSES.md
+docs/contest-application-consent.official.docx
+docs/*.docx
+ideas/02-drive-canvas/
