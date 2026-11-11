@@ -2,6 +2,14 @@
 
 현대자동차그룹 차량용 앱 개발 공모전용 Android Automotive 프로젝트입니다. SafeLoop는 출발 전·주행 중·도착 후의 안전 습관을 차량 데이터로 설명하고, 다음 이동에서 고칠 행동 하나를 제안하는 전 주기 운전 코치입니다. Kotlin, Compose, `minSdk 28`, Gradle 8.10.2, Pleos Vehicle SDK 2.3.2와 NaviHelper 3.0.5를 사용합니다.
 
+## 시연 영상
+
+Pleos Connect AVD v2.1에서 release APK를 실행하고 Virtual Console로 차량 신호(도어, 기어, 차속, 방향지시등, 제동)를 바꿔 가며 녹화했습니다. 탑승 브리핑 → 주행 상태 → 도착 확인 → 상세 리포트 순서입니다. (2분 2초, 자막 포함)
+
+<!-- ▼ 여기에 01_SafeLoop_시연_자막.mp4 를 끌어다 놓기 -->
+
+<!-- ▼ 여기에 YouTube 링크: - YouTube: https://youtu.be/... -->
+
 ## 현재 산출물
 
 - 여러 공모전 아이디어의 공통 구조와 현황: [ideas/README.md](ideas/README.md)
