@@ -24,6 +24,10 @@
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.PleosChallenge">
+            <!-- 주행 중 코칭 화면을 표시하기 위한 운전자 주의분산 최적화 선언 -->
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
