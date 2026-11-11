@@ -6,7 +6,7 @@
 
 Pleos Connect AVD v2.1에서 release APK를 실행하고 Virtual Console로 차량 신호(도어, 기어, 차속, 방향지시등, 제동)를 바꿔 가며 녹화했습니다. 탑승 브리핑 → 주행 상태 → 도착 확인 → 상세 리포트 순서입니다. (2분 2초, 자막 포함)
 
-<!-- ▼ 여기에 01_SafeLoop_시연_자막.mp4 를 끌어다 놓기 -->
+▶ [시연 영상 보기 (mp4, 4.4MB)](https://github.com/lood34970-afk/safeloop/releases/download/v1.0/SafeLoop_demo.mp4) · [Release v1.0: APK와 영상](https://github.com/lood34970-afk/safeloop/releases/tag/v1.0)
 
 <!-- ▼ 여기에 YouTube 링크: - YouTube: https://youtu.be/... -->
 
