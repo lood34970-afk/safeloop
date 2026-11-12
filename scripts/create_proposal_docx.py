@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 from docx import Document
 from docx.enum.text import WD_LINE_SPACING
@@ -14,7 +15,9 @@ from docx.shared import Pt
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "docs" / "contest-application-consent.official.docx"
 CONTENT = ROOT / "docs" / "PROPOSAL_CONTENT_V1.md"
-OUTPUT = ROOT / "docs" / "SafeLoop_공모전_제안서_v1.docx"
+OUTPUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs" / "SafeLoop_공모전_제안서_v1.docx"
+REPO = "https://github.com/lood34970-afk/safeloop"
+RELEASE = f"{REPO}/releases"
 
 
 def parse_sections(markdown: str) -> dict[int, list[str]]:
@@ -78,6 +81,50 @@ def add_text_run(paragraph, text: str, *, bold=False, size=9.2) -> None:
     run._element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
 
 
+LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
+
+
+def add_hyperlink_run(paragraph, text: str, url: str, *, size=9.2) -> None:
+    rel_id = paragraph.part.relate_to(
+        url,
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+        is_external=True,
+    )
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), rel_id)
+    run = OxmlElement("w:r")
+    r_pr = OxmlElement("w:rPr")
+    fonts = OxmlElement("w:rFonts")
+    for attr in ("w:ascii", "w:hAnsi", "w:eastAsia"):
+        fonts.set(qn(attr), "맑은 고딕")
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "0563C1")
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    font_size = OxmlElement("w:sz")
+    font_size.set(qn("w:val"), str(round(size * 2)))
+    r_pr.extend([fonts, color, underline, font_size])
+    run.append(r_pr)
+    text_el = OxmlElement("w:t")
+    text_el.text = text
+    text_el.set(qn("xml:space"), "preserve")
+    run.append(text_el)
+    hyperlink.append(run)
+    paragraph._p.append(hyperlink)
+
+
+def add_rich_text(paragraph, text: str, *, size=9.2) -> None:
+    """Add text, turning markdown [label](url) into clickable hyperlinks."""
+    pos = 0
+    for match in LINK.finditer(text):
+        if match.start() > pos:
+            add_text_run(paragraph, text[pos:match.start()], size=size)
+        add_hyperlink_run(paragraph, match.group(1), match.group(2), size=size)
+        pos = match.end()
+    if pos < len(text):
+        add_text_run(paragraph, text[pos:], size=size)
+
+
 def fill_cell_from_markdown(cell, lines: list[str], section_number: int) -> None:
     clear_cell(cell)
     set_cell_margins(cell)
@@ -110,7 +157,7 @@ def fill_cell_from_markdown(cell, lines: list[str], section_number: int) -> None
             paragraph.paragraph_format.left_indent = Pt(10)
             paragraph.paragraph_format.first_line_indent = Pt(-8)
             add_text_run(paragraph, "• ", bold=True)
-            add_text_run(paragraph, bullet.group(1))
+            add_rich_text(paragraph, bullet.group(1))
             continue
         if numbered:
             style_paragraph(paragraph, compact=True)
@@ -151,9 +198,11 @@ def main() -> int:
     fill_cell_from_markdown(
         document.tables[7].cell(0, 0),
         [
-            "- 핵심 API 진단 화면 캡처: safeloop-capability-spike.png",
-            "- 동작 프로토타입 APK: app-debug.apk",
-            "- 기술 검증 결과: TECH_SPIKE_RESULTS.md",
+            f"- GitHub 저장소(소스 코드·release APK): [{REPO}]({REPO})",
+            f"- 시연 영상(2분 2초, 자막 포함): [SafeLoop_demo.mp4]({RELEASE}/download/v1.0/SafeLoop_demo.mp4)",
+            f"- 제출용 release APK: [설계3.5팀_SafeLoop_release.apk]({REPO}/blob/main/apk/{quote('설계3.5팀_SafeLoop_release.apk')}) · [Release v1.0]({RELEASE}/tag/v1.0)",
+            f"- 기술 검증 결과: [TECH_SPIKE_RESULTS.md]({REPO}/blob/main/docs/TECH_SPIKE_RESULTS.md)",
+            f"- 핵심 API 진단 화면 캡처: [safeloop-capability-spike.png]({REPO}/blob/main/docs/assets/safeloop-capability-spike.png)",
         ],
         7,
     )
