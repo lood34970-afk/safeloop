@@ -14,10 +14,47 @@ from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "docs" / "contest-application-consent.official.docx"
-CONTENT = ROOT / "docs" / "PROPOSAL_CONTENT_V1.md"
-OUTPUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs" / "SafeLoop_공모전_제안서_v1.docx"
-REPO = "https://github.com/lood34970-afk/safeloop"
-RELEASE = f"{REPO}/releases"
+TEAM = "설계3.5팀"
+GITHUB = "https://github.com/lood34970-afk"
+
+
+def _apk_link(repo: str, apk: str) -> str:
+    return f"[{apk}]({repo}/blob/main/apk/{quote(apk)}) · [Release v1.0]({repo}/releases/tag/v1.0)"
+
+
+SL = f"{GITHUB}/safeloop"
+DC = f"{GITHUB}/drivecanvas"
+
+# Usage: python scripts/create_proposal_docx.py [safeloop|drivecanvas] [output.docx]
+PROFILES = {
+    "safeloop": {
+        "app_name": "SafeLoop(세이프루프)",
+        "content": ROOT / "docs" / "PROPOSAL_CONTENT_V1.md",
+        "output": ROOT / "docs" / "SafeLoop_공모전_제안서_v1.docx",
+        "keywords": "SafeLoop, Pleos, 운전 습관, 차량용 앱",
+        "references": [
+            f"- GitHub 저장소(소스 코드·release APK): [{SL}]({SL})",
+            f"- 시연 영상(2분 2초, 자막 포함): [SafeLoop_demo.mp4]({SL}/releases/download/v1.0/SafeLoop_demo.mp4)",
+            f"- 제출용 release APK: {_apk_link(SL, f'{TEAM}_SafeLoop_release.apk')}",
+            f"- 기술 검증 결과: [TECH_SPIKE_RESULTS.md]({SL}/blob/main/docs/TECH_SPIKE_RESULTS.md)",
+            f"- 핵심 API 진단 화면 캡처: [safeloop-capability-spike.png]({SL}/blob/main/docs/assets/safeloop-capability-spike.png)",
+        ],
+    },
+    "drivecanvas": {
+        "app_name": "Drive Canvas(드라이브 캔버스)",
+        "content": ROOT / "ideas" / "02-drive-canvas" / "docs" / "PROPOSAL_CONTENT_V1.md",
+        "output": ROOT / "docs" / "DriveCanvas_공모전_제안서_v1.docx",
+        "keywords": "Drive Canvas, Pleos, NaviHelper, GPS 아트, 차량용 앱",
+        "references": [
+            f"- GitHub 저장소(소스 코드·release APK): [{DC}]({DC})",
+            f"- 시연 영상 1 — 완주 시나리오(2분 5초, 자막 포함): [DriveCanvas_demo_complete.mp4]({DC}/releases/download/v1.0/DriveCanvas_demo_complete.mp4)",
+            f"- 시연 영상 2 — 경로 이탈 시나리오(1분 40초, 자막 포함): [DriveCanvas_demo_offroute.mp4]({DC}/releases/download/v1.0/DriveCanvas_demo_offroute.mp4)",
+            f"- 제출용 release APK: {_apk_link(DC, f'{TEAM}_DriveCanvas_release.apk')}",
+            f"- 프로토타입 검증 결과: [prototype/README.md]({DC}/blob/main/prototype/README.md) · 구현 설계: [prototype/SPEC.md]({DC}/blob/main/prototype/SPEC.md)",
+            f"- 화면: [코스 비교]({DC}/blob/main/assets/drivecanvas-course.png) · [주행]({DC}/blob/main/assets/drivecanvas-driving.png) · [완주 결과]({DC}/blob/main/assets/drivecanvas-result-completed.png) · [경로 이탈 결과]({DC}/blob/main/assets/drivecanvas-result-offroute.png)",
+        ],
+    },
+}
 
 
 def parse_sections(markdown: str) -> dict[int, list[str]]:
@@ -174,48 +211,49 @@ def fill_cell_from_markdown(cell, lines: list[str], section_number: int) -> None
         add_text_run(cell.paragraphs[0], "")
 
 
-def replace_app_name(paragraph) -> None:
+def replace_app_name(paragraph, app_name: str) -> None:
     paragraph.clear()
-    add_text_run(paragraph, "앱명 / 프로젝트명: SafeLoop(세이프루프)", bold=True, size=10.5)
+    add_text_run(paragraph, f"앱명 / 프로젝트명: {app_name}", bold=True, size=10.5)
 
 
 def main() -> int:
-    if not TEMPLATE.exists() or not CONTENT.exists():
+    key = sys.argv[1] if len(sys.argv) > 1 else "safeloop"
+    if key not in PROFILES:
+        print(f"Unknown profile {key!r}; choose one of {sorted(PROFILES)}", file=sys.stderr)
+        return 2
+    profile = PROFILES[key]
+    content = profile["content"]
+    output = Path(sys.argv[2]) if len(sys.argv) > 2 else profile["output"]
+    if not TEMPLATE.exists() or not content.exists():
         print("Required template or content file is missing.", file=sys.stderr)
         return 2
 
-    sections = parse_sections(CONTENT.read_text(encoding="utf-8"))
+    sections = parse_sections(content.read_text(encoding="utf-8"))
     document = Document(TEMPLATE)
     if len(document.tables) < 9 or len(document.paragraphs) <= 28:
         print("Official template structure is different from the expected version.", file=sys.stderr)
         return 3
 
-    replace_app_name(document.paragraphs[12])
-    replace_app_name(document.paragraphs[28])
-    replace_app_name(document.paragraphs[66])
+    app_name = profile["app_name"]
+    replace_app_name(document.paragraphs[12], app_name)
+    replace_app_name(document.paragraphs[28], app_name)
+    replace_app_name(document.paragraphs[66], app_name)
     for number in range(1, 7):
         fill_cell_from_markdown(document.tables[number].cell(0, 0), sections[number], number)
-    fill_cell_from_markdown(
-        document.tables[7].cell(0, 0),
-        [
-            f"- GitHub 저장소(소스 코드·release APK): [{REPO}]({REPO})",
-            f"- 시연 영상(2분 2초, 자막 포함): [SafeLoop_demo.mp4]({RELEASE}/download/v1.0/SafeLoop_demo.mp4)",
-            f"- 제출용 release APK: [설계3.5팀_SafeLoop_release.apk]({REPO}/blob/main/apk/{quote('설계3.5팀_SafeLoop_release.apk')}) · [Release v1.0]({RELEASE}/tag/v1.0)",
-            f"- 기술 검증 결과: [TECH_SPIKE_RESULTS.md]({REPO}/blob/main/docs/TECH_SPIKE_RESULTS.md)",
-            f"- 핵심 API 진단 화면 캡처: [safeloop-capability-spike.png]({REPO}/blob/main/docs/assets/safeloop-capability-spike.png)",
-        ],
-        7,
-    )
+    fill_cell_from_markdown(document.tables[7].cell(0, 0), profile["references"], 7)
 
     properties = document.core_properties
-    properties.title = "SafeLoop 공모전 제안서"
+    properties.title = f"{app_name.split('(')[0]} 공모전 제안서"
     properties.subject = "현대자동차그룹 차량용 앱 개발 공모전"
-    properties.keywords = "SafeLoop, Pleos, 운전 습관, 차량용 앱"
+    properties.keywords = profile["keywords"]
     properties.comments = "공식 양식을 보존한 제안서 내용 초안"
+    # Keep personal names out of file metadata (the official template carries one).
+    properties.author = TEAM
+    properties.last_modified_by = TEAM
 
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    document.save(OUTPUT)
-    print(OUTPUT)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    document.save(output)
+    print(output)
     return 0
 
 
